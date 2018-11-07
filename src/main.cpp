@@ -81,7 +81,7 @@ bool fVerifyingBlocks = false;
 unsigned int nCoinCacheSize = 5000;
 bool fAlerts = DEFAULT_ALERTS;
 
-unsigned int nStakeMinAge = 60 * 5; // 6 hours
+unsigned int nStakeMinAge = 60 * 60; // 6 hours
 int64_t nReserveBalance = 0;
 
 /** Fees smaller than this (in uyce) are considered zero fee (for relaying and mining)
@@ -5406,13 +5406,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
         // Instantly ban old peers once we are at the upgrade block
-        if (pfrom->cleanSubVer == "/Myce:1.0.0/" && chainActive.Height() + 1 >= Params().WALLET_UPGRADE_BLOCK()) {
+        if (pfrom->nVersion < 70914 && chainActive.Height() + 1 >= Params().WALLET_UPGRADE_BLOCK()) {
             LOCK(cs_main);
             Misbehaving(pfrom->GetId(), 100);
             return false;
         }
         // Ban peers that have not updated by the time zerocoin, cltv, and csv are deployed
-        if ((pfrom->cleanSubVer == "/Myce:2.0.0/" || pfrom->cleanSubVer == "/MYCE Core:2.0.0/") && chainActive.Height() + 1 >= Params().Zerocoin_StartHeight()) {
+        if (pfrom->nVersion < 70915 && chainActive.Height() + 1 >= Params().Zerocoin_StartHeight()) {
             LOCK(cs_main);
             Misbehaving(pfrom->GetId(), 100);
             return false;
