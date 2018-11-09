@@ -122,9 +122,9 @@ public:
         nDefaultPort = 23511;
         bnProofOfWorkLimit = ~uint256(0) >> 16; // Myce starting difficulty is 1 / 2^12
         nMaxReorganizationDepth = 100;
-        nEnforceBlockUpgradeMajority = 1080;
-        nRejectBlockOutdatedMajority = 1368;
-        nToCheckBlockUpgradeMajority = 1440;
+        nEnforceBlockUpgradeMajority = 8100; // 75%
+        nRejectBlockOutdatedMajority = 10260; // 95%
+        nToCheckBlockUpgradeMajority = 10800; // Approximate expected amount of blocks in 7 days (1440*7.5)
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // Myce: 1 day
         nTargetSpacing = 1 * 60;  // Myce: 1 minute
@@ -249,9 +249,9 @@ public:
         pchMessageStart[3] = 0x78;
         vAlertPubKey = ParseHex("0358d5fb8000c49d38aaab6dc5d0c0a0322eff3090eff026963eb819dc3dec8439");
         nDefaultPort = 20114;
-        nEnforceBlockUpgradeMajority = 51;
-        nRejectBlockOutdatedMajority = 75;
-        nToCheckBlockUpgradeMajority = 100;
+        nEnforceBlockUpgradeMajority = 4320; // 75%
+        nRejectBlockOutdatedMajority = 5472; // 95%
+        nToCheckBlockUpgradeMajority = 5760; // 4 days
         nMinerThreads = 0;
         nTargetTimespan = 1 * 60; // Myce: 1 day
         nTargetSpacing = 1 * 60;  // Myce: 1 minute

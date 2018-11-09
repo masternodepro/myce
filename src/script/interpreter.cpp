@@ -91,7 +91,7 @@ bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
  * Where R and S are not negative (their first byte has its highest bit not set), and not
  * excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
  * in which case a single 0 byte is necessary and even required).
- * 
+ *
  * See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
  *
  * This function is consensus-critical since BIP66.
@@ -131,7 +131,7 @@ bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig) {
     // Verify that the length of the signature matches the sum of the length
     // of the elements.
     if ((size_t)(lenR + lenS + 7) != sig.size()) return false;
- 
+
     // Check whether the R element is an integer.
     if (sig[2] != 0x02) return false;
 
@@ -417,7 +417,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     break;
                 }
 
-                case OP_NOP1: case OP_NOP4: case OP_NOP5: case OP_NOP6: 
+                case OP_NOP1: case OP_NOP4: case OP_NOP5: case OP_NOP6:
                 case OP_NOP7: case OP_NOP8: case OP_NOP9: case OP_NOP10:
                 {
                     if (flags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
@@ -853,7 +853,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     popstack(stack);
                     stack.push_back(vchHash);
                 }
-                break;                                   
+                break;
 
                 case OP_CODESEPARATOR:
                 {
@@ -896,6 +896,55 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, un
                     }
                 }
                 break;
+
+                case OP_CHECKDATASIG:
+                case OP_CHECKDATASIGVERIFY: {
+                    // Make sure this remains an error before activation.
+                    if ((flags & SCRIPT_ENABLE_CHECKDATASIG) == 0) {
+                        return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
+                    }
+                    // (sig message pubkey -- bool)
+                    if (stack.size() < 3) {
+                        return set_error(
+                            serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
+                    }
+                    valtype &vchSig = stacktop(-3);
+                    valtype &vchMessage = stacktop(-2);
+                    valtype &vchPubKey = stacktop(-1);
+                    // The size of the message must be 32 bytes.
+                    if (vchMessage.size() != 32) {
+                        return set_error(serror,
+                                         SCRIPT_ERR_INVALID_OPERAND_SIZE);
+                    }
+                    if (!CheckDataSignatureEncoding(vchSig, flags,
+                                                    serror) ||
+                        !CheckPubKeyEncoding(vchPubKey, flags, serror)) {
+                        // serror is set
+                        return false;
+                    }
+                     bool fSuccess = false;
+                    if (vchSig.size()) {
+                        uint256 message(vchMessage);
+                        CPubKey pubkey(vchPubKey);
+                        fSuccess = pubkey.Verify(message, vchSig);
+                    }
+                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) &&
+                        vchSig.size()) {
+                        return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
+                    }
+                     popstack(stack);
+                    popstack(stack);
+                    popstack(stack);
+                    stack.push_back(fSuccess ? vchTrue : vchFalse);
+                    if (opcode == OP_CHECKDATASIGVERIFY) {
+                        if (fSuccess) {
+                            popstack(stack);
+                        } else {
+                            return set_error(serror,
+                                             SCRIPT_ERR_CHECKDATASIGVERIFY);
+                        }
+                    }
+                } break;
 
                 case OP_CHECKMULTISIG:
                 case OP_CHECKMULTISIGVERIFY:

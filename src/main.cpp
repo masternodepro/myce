@@ -1434,7 +1434,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         int flags = STANDARD_SCRIPT_VERIFY_FLAGS;
         if (fNewProtocolActive)
-            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_VERIFY_MINIMALIF | SCRIPT_VERIFY_NULLFAIL | SCRIPT_ENABLE_CHECKDATASIG;
         if (!CheckInputs(tx, state, view, true, flags, true)) {
             return error("AcceptToMemoryPool: : ConnectInputs failed %s", hash.ToString());
         }
@@ -1450,7 +1450,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         // can be exploited as a DoS attack.
         flags = MANDATORY_SCRIPT_VERIFY_FLAGS;
         if (fNewProtocolActive)
-            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_VERIFY_MINIMALIF | SCRIPT_VERIFY_NULLFAIL | SCRIPT_ENABLE_CHECKDATASIG;
         if (!CheckInputs(tx, state, view, true, flags, true)) {
             return error("AcceptToMemoryPool: : BUG! PLEASE REPORT THIS! ConnectInputs failed against MANDATORY but not STANDARD flags %s", hash.ToString());
         }
@@ -1643,7 +1643,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         int flags = STANDARD_SCRIPT_VERIFY_FLAGS;
         if (fNewProtocolActive)
-            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_VERIFY_MINIMALIF | SCRIPT_VERIFY_NULLFAIL | SCRIPT_ENABLE_CHECKDATASIG;
         if (!CheckInputs(tx, state, view, false, flags, true)) {
             return error("AcceptableInputs: : ConnectInputs failed %s", hash.ToString());
         }
@@ -1827,70 +1827,70 @@ int64_t GetBlockValue(int nHeight, bool fProofOfStake)
             return 250000 * COIN;
     }
 
-	int64_t nSubsidy = 0;
-	if (fProofOfStake)
-	{
-		nHeight--; // Legacy wallet calculated PoS reward with height-1
-		if (nHeight >= 10000 && nHeight <= 50000)
-		{
-			nSubsidy = 25 * COIN;
-		} else if (nHeight <= 100000 && nHeight > 50000)
-		{
-			nSubsidy = 50 * COIN;
-		} else if (nHeight <= 150000 && nHeight > 100000)
-		{
-			nSubsidy = 75 * COIN;
-		} else if (nHeight <= 200000 && nHeight > 150000)
-		{
-			nSubsidy = 100 * COIN;
-		} else if (nHeight <= 250000 && nHeight > 200000)
-		{
-			nSubsidy = 75 * COIN;
-		} else if (nHeight <= 300000 && nHeight > 250000)
-		{
-			nSubsidy = 100 * COIN;
-		} else if (nHeight <= 350000 && nHeight > 300000)
-		{
-			nSubsidy = 75 * COIN;
-		} else if (nHeight <= 400000 && nHeight > 350000)
-		{
-			nSubsidy = 50 * COIN;
-		} else if (nHeight <= 450000 && nHeight > 400000)
-		{
-			nSubsidy = 25 * COIN;
-		} else if (nHeight <= 500000 && nHeight > 450000)
-		{
-			nSubsidy = 20 * COIN;
-		} else
-		{
-			nSubsidy = 10 * COIN;
-		}
-	}
-	else
-	{
-		if (nHeight == 1)
-		{
-			nSubsidy = 250 * COIN;
-		} else if (nHeight > 1 && nHeight <= 11)
-		{
-			nSubsidy = 3500000 * COIN;
-		} else if (nHeight > 11 && nHeight <= 20000)
-		{
-			nSubsidy = 50 * COIN;
-		} else if (nHeight > 20000 && nHeight <= 50000)
-		{
-			nSubsidy = 25 * COIN;
-		} else if(nHeight > 50000 && nHeight <= 100000)
-		{
-			nSubsidy = 20 * COIN;
-		} else if(nHeight > 100000 && nHeight <= 200000)
-		{
-			nSubsidy = 10 * COIN;
-		} else {
-			nSubsidy = 0 * COIN;
-		}
-	}
-	return nSubsidy;
+    int64_t nSubsidy = 0;
+    if (fProofOfStake)
+    {
+        nHeight--; // Legacy wallet calculated PoS reward with height-1
+        if (nHeight >= 10000 && nHeight <= 50000)
+        {
+            nSubsidy = 25 * COIN;
+        } else if (nHeight <= 100000 && nHeight > 50000)
+        {
+            nSubsidy = 50 * COIN;
+        } else if (nHeight <= 150000 && nHeight > 100000)
+        {
+            nSubsidy = 75 * COIN;
+        } else if (nHeight <= 200000 && nHeight > 150000)
+        {
+            nSubsidy = 100 * COIN;
+        } else if (nHeight <= 250000 && nHeight > 200000)
+        {
+            nSubsidy = 75 * COIN;
+        } else if (nHeight <= 300000 && nHeight > 250000)
+        {
+            nSubsidy = 100 * COIN;
+        } else if (nHeight <= 350000 && nHeight > 300000)
+        {
+            nSubsidy = 75 * COIN;
+        } else if (nHeight <= 400000 && nHeight > 350000)
+        {
+            nSubsidy = 50 * COIN;
+        } else if (nHeight <= 450000 && nHeight > 400000)
+        {
+            nSubsidy = 25 * COIN;
+        } else if (nHeight <= 500000 && nHeight > 450000)
+        {
+            nSubsidy = 20 * COIN;
+        } else
+        {
+            nSubsidy = 10 * COIN;
+        }
+    }
+    else
+    {
+        if (nHeight == 1)
+        {
+            nSubsidy = 250 * COIN;
+        } else if (nHeight > 1 && nHeight <= 11)
+        {
+            nSubsidy = 3500000 * COIN;
+        } else if (nHeight > 11 && nHeight <= 20000)
+        {
+            nSubsidy = 50 * COIN;
+        } else if (nHeight > 20000 && nHeight <= 50000)
+        {
+            nSubsidy = 25 * COIN;
+        } else if(nHeight > 50000 && nHeight <= 100000)
+        {
+            nSubsidy = 20 * COIN;
+        } else if(nHeight > 100000 && nHeight <= 200000)
+        {
+            nSubsidy = 10 * COIN;
+        } else {
+            nSubsidy = 0 * COIN;
+        }
+    }
+    return nSubsidy;
 }
 
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCount, bool isZYCEStake)
@@ -2846,7 +2846,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             std::vector<CScriptCheck> vChecks;
             unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_DERSIG;
             if (fNewProtocolActive)
-                flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+                flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_VERIFY_MINIMALIF | SCRIPT_VERIFY_NULLFAIL | SCRIPT_ENABLE_CHECKDATASIG;
 
             if (!CheckInputs(tx, state, view, fScriptChecks, flags, false, nScriptCheckThreads ? &vChecks : NULL))
                 return false;
