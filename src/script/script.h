@@ -173,6 +173,16 @@ enum opcodetype
     // zerocoin
     OP_ZEROCOINMINT = 0xc1,
     OP_ZEROCOINSPEND = 0xc2,
+    // More crypto
+    OP_CHECKDATASIG = 0xba,
+    OP_CHECKDATASIGVERIFY = 0xbb,
+
+    // The first op_code value after all defined opcodes
+    FIRST_UNDEFINED_OP_VALUE,
+
+    // multi-byte opcodes
+    OP_PREFIX_BEGIN = 0xf0,
+    OP_PREFIX_END = 0xf7,
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -183,7 +193,7 @@ enum opcodetype
     OP_INVALIDOPCODE = 0xff,
 };
 
-const char* GetOpName(opcodetype opcode);
+const char *GetOpName(opcodetype opcode);
 
 class scriptnum_error : public std::runtime_error
 {

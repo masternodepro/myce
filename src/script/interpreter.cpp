@@ -20,24 +20,6 @@ using namespace std;
 
 typedef vector<unsigned char> valtype;
 
-namespace {
-
-inline bool set_success(ScriptError* ret)
-{
-    if (ret)
-        *ret = SCRIPT_ERR_OK;
-    return true;
-}
-
-inline bool set_error(ScriptError* ret, const ScriptError serror)
-{
-    if (ret)
-        *ret = serror;
-    return false;
-}
-
-} // anon namespace
-
 bool CastToBool(const valtype &vch) {
     for (size_t i = 0; i < vch.size(); i++) {
         if (vch[i] != 0) {
@@ -291,10 +273,12 @@ bool EvalScript(std::vector<valtype> &stack, const CScript &script,
             //
             // Read instruction
             //
-            if (!script.GetOp(pc, opcode, vchPushValue))
+            if (!script.GetOp(pc, opcode, vchPushValue)) {
                 return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
-            if (vchPushValue.size() > MAX_SCRIPT_ELEMENT_SIZE)
+            }
+            if (vchPushValue.size() > MAX_SCRIPT_ELEMENT_SIZE) {
                 return set_error(serror, SCRIPT_ERR_PUSH_SIZE);
+            }
 
             // Note how OP_RESERVED does not count towards the opcode limit.
             if (opcode > OP_16 && ++nOpCount > 201)
@@ -1030,8 +1014,8 @@ bool EvalScript(std::vector<valtype> &stack, const CScript &script,
                     // codeseparator
                     CScript scriptCode(pbegincodehash, pend);
 
-                    // Remove signature for pre-fork scripts
-                    CleanupScriptCode(scriptCode, vchSig, flags);
+                    // Drop the signature, since there's no way for a signature to sign itself
+                    scriptCode.FindAndDelete(CScript(vchSig));
 
                     bool fSuccess = checker.CheckSig(vchSig, vchPubKey,
                                                      scriptCode, flags);
@@ -1084,11 +1068,13 @@ bool EvalScript(std::vector<valtype> &stack, const CScript &script,
                         CPubKey pubkey(vchPubKey);
                         fSuccess = pubkey.Verify(message, vchSig);
                     }
-                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) &&
+
+                    if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) &&
                         vchSig.size()) {
                         return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
                     }
-                     popstack(stack);
+
+                    popstack(stack);
                     popstack(stack);
                     popstack(stack);
                     stack.push_back(fSuccess ? vchTrue : vchFalse);
@@ -1147,10 +1133,10 @@ bool EvalScript(std::vector<valtype> &stack, const CScript &script,
                     // codeseparator
                     CScript scriptCode(pbegincodehash, pend);
 
-                    // Remove signature for pre-fork scripts
+                    // Drop the signatures, since there's no way for a signature to sign itself
                     for (int k = 0; k < nSigsCount; k++) {
                         valtype &vchSig = stacktop(-isig - k);
-                        CleanupScriptCode(scriptCode, vchSig, flags);
+                        scriptCode.FindAndDelete(CScript(vchSig));
                     }
 
                     bool fSuccess = true;
@@ -1613,20 +1599,24 @@ bool VerifyScript(const CScript &scriptSig, const CScript &scriptPubKey,
         return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);
     }
 
-    vector<vector<unsigned char> > stack, stackCopy;
-    if (!EvalScript(stack, scriptSig, flags, checker, serror))
+    std::vector<valtype> stack, stackCopy;
+    if (!EvalScript(stack, scriptSig, flags, checker, serror)) {
         // serror is set
         return false;
-    if (flags & SCRIPT_VERIFY_P2SH)
+    }
+    if (flags & SCRIPT_VERIFY_P2SH) {
         stackCopy = stack;
-    if (!EvalScript(stack, scriptPubKey, flags, checker, serror))
+    }
+    if (!EvalScript(stack, scriptPubKey, flags, checker, serror)) {
         // serror is set
         return false;
-    if (stack.empty())
+    }
+    if (stack.empty()) {
         return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
-
-    if (CastToBool(stack.back()) == false)
+    }
+    if (CastToBool(stack.back()) == false) {
         return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
+    }
 
     // Additional validation for spend-to-script-hash transactions:
     if ((flags & SCRIPT_VERIFY_P2SH) && scriptPubKey.IsPayToScriptHash())
