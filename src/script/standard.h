@@ -48,14 +48,16 @@ static const uint32_t MANDATORY_SCRIPT_VERIFY_FLAGS =
  * with. However scripts violating these flags may still be present in valid
  * blocks and we must accept those blocks.
  */
-static const uint32_t STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY_FLAGS |
-                                                         SCRIPT_VERIFY_DERSIG |
-                                                         SCRIPT_VERIFY_MINIMALDATA |
-                                                         SCRIPT_VERIFY_NULLDUMMY |
-                                                         SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
+static const uint32_t STANDARD_SCRIPT_VERIFY_FLAGS =
+    MANDATORY_SCRIPT_VERIFY_FLAGS | SCRIPT_VERIFY_DERSIG |
+    SCRIPT_VERIFY_NULLDUMMY | SCRIPT_VERIFY_SIGPUSHONLY |
+    SCRIPT_VERIFY_MINIMALDATA | SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
 
-/** For convenience, standard but not mandatory verify flags. */
-static const uint32_t STANDARD_NOT_MANDATORY_VERIFY_FLAGS = STANDARD_SCRIPT_VERIFY_FLAGS & ~MANDATORY_SCRIPT_VERIFY_FLAGS;
+/**
+ * For convenience, standard but not mandatory verify flags.
+ */
+static const uint32_t STANDARD_NOT_MANDATORY_VERIFY_FLAGS =
+    STANDARD_SCRIPT_VERIFY_FLAGS & ~MANDATORY_SCRIPT_VERIFY_FLAGS;
 
 enum txnouttype
 {

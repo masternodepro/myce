@@ -287,34 +287,52 @@ const char *GetOpName(opcodetype opcode) {
     }
 }
 
-unsigned int CScript::GetSigOpCount(bool fAccurate) const
-{
-    unsigned int n = 0;
+uint32_t CScript::GetSigOpCount(uint32_t flags, bool fAccurate) const {
+    uint32_t n = 0;
     const_iterator pc = begin();
     opcodetype lastOpcode = OP_INVALIDOPCODE;
-    while (pc < end())
-    {
+    while (pc < end()) {
         opcodetype opcode;
-        if (!GetOp(pc, opcode))
+        if (!GetOp(pc, opcode)) {
             break;
-        if (opcode == OP_CHECKSIG || opcode == OP_CHECKSIGVERIFY)
-            n++;
-        else if (opcode == OP_CHECKMULTISIG || opcode == OP_CHECKMULTISIGVERIFY)
-        {
-            if (fAccurate && lastOpcode >= OP_1 && lastOpcode <= OP_16)
-                n += DecodeOP_N(lastOpcode);
-            else
-                n += 20;
         }
+
+        switch (opcode) {
+            case OP_CHECKSIG:
+            case OP_CHECKSIGVERIFY:
+                n++;
+                break;
+
+            case OP_CHECKDATASIG:
+            case OP_CHECKDATASIGVERIFY:
+                if (flags & SCRIPT_ENABLE_CHECKDATASIG) {
+                    n++;
+                }
+                break;
+
+            case OP_CHECKMULTISIG:
+            case OP_CHECKMULTISIGVERIFY:
+                if (fAccurate && lastOpcode >= OP_1 && lastOpcode <= OP_16) {
+                    n += DecodeOP_N(lastOpcode);
+                } else {
+                    n += MAX_PUBKEYS_PER_MULTISIG;
+                }
+                break;
+            default:
+                break;
+        }
+
         lastOpcode = opcode;
     }
+
     return n;
 }
 
-unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
-{
-    if (!IsPayToScriptHash())
-        return GetSigOpCount(true);
+uint32_t CScript::GetSigOpCount(uint32_t flags,
+                                const CScript &scriptSig) const {
+    if ((flags & SCRIPT_VERIFY_P2SH) == 0 || !IsPayToScriptHash()) {
+        return GetSigOpCount(flags, true);
+    }
 
     // This is a pay-to-script-hash scriptPubKey;
     // get the last item that the scriptSig

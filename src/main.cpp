@@ -81,7 +81,7 @@ bool fVerifyingBlocks = false;
 unsigned int nCoinCacheSize = 5000;
 bool fAlerts = DEFAULT_ALERTS;
 
-unsigned int nStakeMinAge = 60 * 60; // 6 hours
+unsigned int nStakeMinAge = 60 * 60 * 6; // 6 hours
 int64_t nReserveBalance = 0;
 
 /** Fees smaller than this (in uyce) are considered zero fee (for relaying and mining)
@@ -1434,7 +1434,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         int flags = STANDARD_SCRIPT_VERIFY_FLAGS;
         if (fNewProtocolActive)
-            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
+            flags |= SCRIPT_VERIFY_CLEANSTACK | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
         if (!CheckInputs(tx, state, view, true, flags, true)) {
             return error("AcceptToMemoryPool: : ConnectInputs failed %s", hash.ToString());
         }
@@ -1450,7 +1450,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState& state, const CTransa
         // can be exploited as a DoS attack.
         flags = MANDATORY_SCRIPT_VERIFY_FLAGS;
         if (fNewProtocolActive)
-            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
+            flags |= SCRIPT_VERIFY_CLEANSTACK | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
         if (!CheckInputs(tx, state, view, true, flags, true)) {
             return error("AcceptToMemoryPool: : BUG! PLEASE REPORT THIS! ConnectInputs failed against MANDATORY but not STANDARD flags %s", hash.ToString());
         }
@@ -1643,7 +1643,7 @@ bool AcceptableInputs(CTxMemPool& pool, CValidationState& state, const CTransact
         // This is done last to help prevent CPU exhaustion denial-of-service attacks.
         int flags = STANDARD_SCRIPT_VERIFY_FLAGS;
         if (fNewProtocolActive)
-            flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
+            flags |= SCRIPT_VERIFY_CLEANSTACK | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
         if (!CheckInputs(tx, state, view, false, flags, true)) {
             return error("AcceptableInputs: : ConnectInputs failed %s", hash.ToString());
         }
@@ -2846,7 +2846,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             std::vector<CScriptCheck> vChecks;
             unsigned int flags = MANDATORY_SCRIPT_VERIFY_FLAGS | SCRIPT_VERIFY_DERSIG;
             if (fNewProtocolActive)
-                flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
+                flags |= SCRIPT_VERIFY_CLEANSTACK | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_ENABLE_CHECKDATASIG;
 
             if (!CheckInputs(tx, state, view, fScriptChecks, flags, false, nScriptCheckThreads ? &vChecks : NULL))
                 return false;

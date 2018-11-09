@@ -45,7 +45,7 @@ enum opcodetype
     OP_1NEGATE = 0x4f,
     OP_RESERVED = 0x50,
     OP_1 = 0x51,
-    OP_TRUE=OP_1,
+    OP_TRUE = OP_1,
     OP_2 = 0x52,
     OP_3 = 0x53,
     OP_4 = 0x54,
@@ -97,9 +97,9 @@ enum opcodetype
 
     // splice ops
     OP_CAT = 0x7e,
-    OP_SUBSTR = 0x7f,
-    OP_LEFT = 0x80,
-    OP_RIGHT = 0x81,
+    OP_SPLIT = 0x7f,   // after monolith upgrade (May 2018)
+    OP_NUM2BIN = 0x80, // after monolith upgrade (May 2018)
+    OP_BIN2NUM = 0x81, // after monolith upgrade (May 2018)
     OP_SIZE = 0x82,
 
     // bit logic
@@ -158,10 +158,10 @@ enum opcodetype
 
     // expansion
     OP_NOP1 = 0xb0,
-    OP_NOP2 = 0xb1,
-    OP_CHECKLOCKTIMEVERIFY = OP_NOP2,
-    OP_NOP3 = 0xb2,
-    OP_CHECKSEQUENCEVERIFY = OP_NOP3,
+    OP_CHECKLOCKTIMEVERIFY = 0xb1,
+    OP_NOP2 = OP_CHECKLOCKTIMEVERIFY,
+    OP_CHECKSEQUENCEVERIFY = 0xb2,
+    OP_NOP3 = OP_CHECKSEQUENCEVERIFY,
     OP_NOP4 = 0xb3,
     OP_NOP5 = 0xb4,
     OP_NOP6 = 0xb5,
@@ -201,16 +201,16 @@ public:
     explicit scriptnum_error(const std::string& str) : std::runtime_error(str) {}
 };
 
-class CScriptNum
-{
-/**
- * Numeric opcodes (OP_1ADD, etc) are restricted to operating on 4-byte integers.
- * The semantics are subtle, though: operands must be in the range [-2^31 +1...2^31 -1],
- * but results may overflow (and are valid as long as they are not used in a subsequent
- * numeric operation). CScriptNum enforces those semantics by storing results as
- * an int64 and allowing out-of-range values to be returned as a vector of bytes but
- * throwing an exception if arithmetic is done or the result is interpreted as an integer.
- */
+class CScriptNum {
+    /**
+     * Numeric opcodes (OP_1ADD, etc) are restricted to operating on 4-byte
+     * integers. The semantics are subtle, though: operands must be in the range
+     * [-2^31 +1...2^31 -1], but results may overflow (and are valid as long as
+     * they are not used in a subsequent numeric operation). CScriptNum enforces
+     * those semantics by storing results as an int64 and allowing out-of-range
+     * values to be returned as a vector of bytes but throwing an exception if
+     * arithmetic is done or the result is interpreted as an integer.
+     */
 public:
 
     explicit CScriptNum(const int64_t& n)
