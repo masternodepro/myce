@@ -240,6 +240,12 @@ const char *GetOpName(opcodetype opcode) {
             return "OP_CHECKMULTISIG";
         case OP_CHECKMULTISIGVERIFY:
             return "OP_CHECKMULTISIGVERIFY";
+        case OP_DETERMINISTICRANDOM:
+            return "OP_DETERMINISTICRANDOM";
+        case OP_CHECKSIGFROMSTACK:
+            return "OP_CHECKSIGFROMSTACK";
+        case OP_CHECKSIGFROMSTACKVERIFY:
+            return "OP_CHECKSIGFROMSTACKVERIFY";
         case OP_CHECKDATASIG:
             return "OP_CHECKDATASIG";
         case OP_CHECKDATASIGVERIFY:
@@ -300,6 +306,8 @@ uint32_t CScript::GetSigOpCount(uint32_t flags, bool fAccurate) const {
         switch (opcode) {
             case OP_CHECKSIG:
             case OP_CHECKSIGVERIFY:
+            case OP_CHECKSIGFROMSTACK:
+            case OP_CHECKSIGFROMSTACKVERIFY:
                 n++;
                 break;
 

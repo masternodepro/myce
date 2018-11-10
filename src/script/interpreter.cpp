@@ -1218,6 +1218,95 @@ bool EvalScript(std::vector<valtype> &stack, const CScript &script,
                         }
                     } break;
 
+                    case OP_CHECKSIGFROMSTACK:
+                    case OP_CHECKSIGFROMSTACKVERIFY:
+                    {
+                        // (sig data pubkey  -- bool)
+                        if (stack.size() < 3)
+                            return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
+
+                        valtype& vchSig    = stacktop(-3);
+                        valtype& vchData   = stacktop(-2);
+                        valtype& vchPubKey = stacktop(-1);
+
+                        // Sigs from stack have no hash byte ever
+                        if (!CheckSignatureEncoding(vchSig, (flags | SCRIPT_NO_SIGHASH_BYTE), serror) || !CheckPubKeyEncoding(vchPubKey, flags, sigversion, serror)) {
+                            //serror is set
+                            return false;
+                        }
+
+                        valtype vchHash(32);
+                        CSHA256().Write(vchData.data(), vchData.size()).Finalize(vchHash.data());
+                        uint256 hash(vchHash);
+
+                        CPubKey pubkey(vchPubKey);
+                        bool fSuccess = pubkey.Verify(hash, vchSig);
+
+                        popstack(stack);
+                        popstack(stack);
+                        popstack(stack);
+                        stack.push_back(fSuccess ? vchTrue : vchFalse);
+                        if (opcode == OP_CHECKSIGFROMSTACKVERIFY)
+                            popstack(stack);
+
+                        if (!fSuccess)
+                            return set_error(serror, SCRIPT_ERR_CHECKSIGVERIFY);
+                    } break;
+
+                    case OP_DETERMINISTICRANDOM:
+                    {
+                        if (stack.size() < 3)
+                            return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
+
+                        valtype vchSeed = stacktop(-3);
+                        CScriptNum bnMin(stacktop(-2), fRequireMinimal);
+                        CScriptNum bnMax(stacktop(-1), fRequireMinimal);
+
+                        if (bnMin > bnMax)
+                            return set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
+
+                        if (bnMin == bnMax) {
+                            popstack(stack);
+                            popstack(stack);
+                            popstack(stack);
+                            stack.push_back(bnMin.getvch());
+                            break;
+                        }
+
+                        // The range of the random source must be a multiple of the modulus
+                        // to give every possible output value an equal possibility
+                        uint64_t nMax = (bnMax-bnMin).getint();
+                        uint64_t nRange = (std::numeric_limits<uint64_t>::max() / nMax) * nMax;
+                        uint64_t nRand;
+
+                        valtype vchHash(32, 0);
+                        uint64_t nCounter = 0;
+                        int nHashIndex = 3;
+                        CSHA256 hasher;
+                        hasher.Write(vchSeed.data(), vchSeed.size());
+                        do {
+                            if (nHashIndex >= 3) {
+                                //TODO this isn't endian safe
+                                CSHA256(hasher).Write((const unsigned char*)&nCounter, sizeof(nCounter)).Finalize(vchHash.data());
+                                nHashIndex = 0;
+                                nCounter++;
+                            }
+
+                            nRand = 0;
+                            for (size_t i=0; i<8; ++i)
+                                nRand |= ((uint64_t)vchHash[(nHashIndex*8) + i]) << (8*i);
+
+                            nHashIndex++;
+                        } while (nRand > nRange);
+                        CScriptNum result(nRand % nMax);
+                        result += bnMin.getint();
+
+                        popstack(stack);
+                        popstack(stack);
+                        popstack(stack);
+                        stack.push_back(result.getvch());
+                    } break;
+
                     //
                     // Byte string operations
                     //
